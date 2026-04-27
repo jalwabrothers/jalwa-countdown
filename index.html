@@ -66,6 +66,59 @@
       width: min(1050px, calc(100% - 2rem));
       margin: 0 auto;
       padding: 2rem 0 3rem;
+      transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease;
+    }
+
+    body.pre-reveal main {
+      opacity: 0.18;
+      transform: scale(1.02);
+      filter: blur(18px);
+      pointer-events: none;
+    }
+
+    .reveal-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+      background:
+        linear-gradient(160deg, rgba(255, 253, 250, 0.58), rgba(253, 229, 212, 0.62)),
+        rgba(255, 248, 239, 0.52);
+      backdrop-filter: blur(20px);
+      transition: opacity 0.7s ease, visibility 0.7s ease;
+      cursor: pointer;
+    }
+
+    body.revealed .reveal-screen {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .reveal-card {
+      text-align: center;
+      padding: 2rem 2.2rem;
+      border: 1px solid rgba(116, 81, 43, 0.12);
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.54);
+      box-shadow: 0 24px 60px rgba(146, 105, 49, 0.12);
+      max-width: 32rem;
+    }
+
+    .reveal-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .reveal-card h2 {
+      margin: 0.8rem 0 0;
+      font-size: clamp(2rem, 6vw, 4rem);
+      line-height: 1;
+      color: var(--text);
     }
 
     .hero {
@@ -379,8 +432,14 @@
     }
   </style>
 </head>
-<body>
+<body class="pre-reveal">
   <audio id="bgMusic" src="music.mp3" preload="auto" loop></audio>
+  <div class="reveal-screen" id="revealScreen" role="button" tabindex="0" aria-label="Touch to reveal">
+    <div class="reveal-card">
+      <p>One last memory waits here</p>
+      <h2>Touch me to reveal</h2>
+    </div>
+  </div>
   <main>
     <section class="hero">
       <div class="shape-field" aria-hidden="true">
@@ -462,6 +521,7 @@
     const secondsEl = document.getElementById("seconds");
     const statusEl = document.getElementById("status");
     const music = document.getElementById("bgMusic");
+    const revealScreen = document.getElementById("revealScreen");
 
     function pad(value) {
       return String(value).padStart(2, "0");
@@ -498,13 +558,24 @@
         await music.play();
         statusEl.textContent = "Every second brings the batch closer to one last unforgettable walk together.";
       } catch (error) {
-        statusEl.textContent = "Tap anywhere once to start the music and let the memories play.";
+        statusEl.textContent = "Touch once to reveal the page and let the memories play.";
       }
     }
 
-    window.addEventListener("load", tryPlayMusic);
-    document.addEventListener("click", tryPlayMusic, { once: true });
-    document.addEventListener("touchstart", tryPlayMusic, { once: true });
+    async function revealExperience() {
+      document.body.classList.remove("pre-reveal");
+      document.body.classList.add("revealed");
+      await tryPlayMusic();
+    }
+
+    revealScreen.addEventListener("click", revealExperience, { once: true });
+    revealScreen.addEventListener("touchstart", revealExperience, { once: true });
+    revealScreen.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        revealExperience();
+      }
+    }, { once: true });
 
     updateCountdown();
     setInterval(updateCountdown, 1000);
